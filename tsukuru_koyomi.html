@@ -286,6 +286,31 @@ input[type="text"]:focus { border-color: var(--warm); }
 .modal-actions { display: flex; gap: 0.4rem; margin-top: 0.8rem; justify-content: flex-end; }
 .btn-cancel { background: none; border: 1px solid var(--soft); padding: 0.5rem 1.1rem; font-family: 'Shippori Mincho', serif; cursor: pointer; color: var(--muted); font-size: 0.82rem; }
 .empty-state { text-align: center; padding: 2rem; color: var(--muted); border: 1px dashed var(--soft); font-size: 0.85rem; }
+
+@media(min-width:768px) {
+  .logo { font-size: 1.8rem; }
+  .today-label { font-size: 0.78rem; }
+  .nav-btn { font-size: 0.88rem; padding: 0.45rem 0.9rem; }
+  .banner-month { font-size: 2.8rem; }
+  .banner-info h2 { font-size: 1rem; }
+  .banner-info p { font-size: 0.75rem; }
+  .week-num { font-size: 0.72rem; }
+  .week-dates { font-size: 0.65rem; }
+  .week-task-cell { padding: 0.9rem 0.7rem; min-height: 90px; }
+  .task-item { font-size: 0.82rem; }
+  .task-pname { font-size: 0.65rem; }
+  .product-name { font-size: 1rem; }
+  .product-category { font-size: 0.75rem; }
+  .month-tag { font-size: 0.7rem; }
+  .btn-sm { font-size: 0.78rem; }
+  .form-title { font-size: 1.05rem; }
+  label { font-size: 0.75rem; }
+  input[type="text"] { font-size: 0.92rem; }
+  .month-check-label { font-size: 0.8rem; }
+  .btn-primary { font-size: 0.92rem; }
+  .help-box p, .help-box li { font-size: 0.83rem; }
+  .section-title { font-size: 0.75rem; }
+}
 </style>
 </head>
 <body>
@@ -544,16 +569,17 @@ function renderHome() {
 
   document.getElementById('bannerMonth').textContent = currentMonth + '月';
 
-  // 準備期間ロジック：「販売月の◯週間前 = 今」の商品を表示
-  // 例：2ヶ月前(8週間)設定 → 今から8週間以内に販売月が来る商品を表示
+  // 準備期間ロジック：今月 + 準備期間 = 販売月 の商品を表示
+  // 例：2ヶ月前(8週間)設定 → 今月(5月) + 8週 = 約7月販売の商品を表示
+  const prepMonths = Math.round(prepWeeks / 4); // 週を月に変換
+  const targetMonths = [];
+  for (let i = 0; i <= prepMonths; i++) {
+    const m = ((currentMonth - 1 + i) % 12) + 1;
+    targetMonths.push(m);
+  }
   const activeProducts = products.filter(p => {
     if (!p.months || p.months.length === 0) return false;
-    return p.months.some(m => {
-      const saleDate = new Date(now.getFullYear(), m - 1, 1);
-      if (saleDate < now) saleDate.setFullYear(saleDate.getFullYear() + 1);
-      const diffWeeks = (saleDate - now) / (7 * 24 * 60 * 60 * 1000);
-      return diffWeeks >= 0 && diffWeeks <= prepWeeks;
-    });
+    return p.months.some(m => targetMonths.includes(m));
   });
 
   document.getElementById('activeCount').textContent = activeProducts.length + '件';
