@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>つくる暦 | ハンドメイド作家のメトロノーム</title>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1410;
+    --paper: #f5f0e8;
+    --warm: #c8a96e;
+    --accent: #b85c3a;
+    --soft: #e8e0d0;
+    --muted: #8a7d6b;
+    --week1: #d4e8c2;
+    --week2: #c2d4e8;
+    --week3: #e8c2d4;
+    --week4: #e8dcc2;
+    --week5: #d4c2e8;
+    --active: #b85c3a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Shippori Mincho', serif;
+    min-height: 100vh;
+    background-image: 
+      radial-gradient(circle at 20% 50%, rgba(200, 169, 110, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(184, 92, 58, 0.06) 0%, transparent 40%);
+  }
+
+  /* ヘッダー */
+  header {
+    padding: 2rem 2rem 1rem;
+    border-bottom: 1px solid var(--warm);
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    position: sticky;
+    top: 0;
+    background: var(--paper);
+    z-index: 100;
+  }
+
+  .logo {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: var(--ink);
+  }
+
+  .logo span {
+    color: var(--accent);
+  }
+
+  .today-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  nav {
+    margin-left: auto;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .nav-btn {
+    background: none;
+    border: 1px solid var(--warm);
+    color: var(--ink);
+    padding: 0.4rem 1rem;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .nav-btn:hover, .nav-btn.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  /* メインレイアウト */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  /* 今月のメトロノーム */
+  .metronome-section {
+    margin-bottom: 3rem;
+  }
+
+  .section-title {
+    font-size: 0.75rem;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--soft);
+  }
+
+  /* 週グリッド */
+  .weeks-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+  }
+
+  .week-card {
+    border: 1px solid var(--soft);
+    padding: 1.2rem;
+    position: relative;
+    transition: all 0.3s;
+    background: white;
+    opacity: 0.7;
+  }
+
+  .week-card.current {
+    border-color: var(--accent);
+    box-shadow: 0 4px 20px rgba(184, 92, 58, 0.15);
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+
+  .week-card.current::before {
+    content: '今週';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+    letter-spacing: 0.1em;
+  }
+
+  .week-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 0.8rem;
+    letter-spacing: 0.1em;
+  }
+
+  .week-tasks {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .week-task {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.6rem;
+    border-left: 2px solid var(--soft);
+    color: var(--muted);
+    line-height: 1.4;
+    transition: all 0.2s;
+  }
+
+  .week-card.current .week-task {
+    border-left-color: var(--warm);
+    color: var(--ink);
+  }
+
+  .week-task.highlight {
+    border-left-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .empty-task {
+    font-size: 0.8rem;
+    color: var(--soft);
+    font-style: italic;
+    padding: 0.4rem 0.6rem;
+  }
+
+  /* 商品リスト */
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .product-card {
+    border: 1px solid var(--soft);
+    padding: 1.2rem;
+    background: white;
+    position: relative;
+    transition: all 0.2s;
+  }
+
+  .product-card:hover {
+    border-color: var(--warm);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .product-name {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .product-meta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.8rem;
+  }
+
+  .month-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    background: var(--soft);
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .month-tag.active-month {
+    background: var(--accent);
+    color: white;
+  }
+
+  .prep-info {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .product-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+  }
+
+  .btn-sm {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid var(--soft);
+    background: none;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+
+  .btn-sm:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+
+  .btn-sm.danger:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* フォーム */
+  .form-section {
+    background: white;
+    border: 1px solid var(--soft);
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .form-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid var(--soft);
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .form-group.full {
+    grid-column: 1 / -1;
+  }
+
+  label {
+    font-size: 0.78rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  input, select {
+    border: 1px solid var(--soft);
+    padding: 0.6rem 0.8rem;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 0.9rem;
+    color: var(--ink);
+    background: var(--paper);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--warm);
+  }
+
+  /* 月選択チェックボックス */
+  .month-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.4rem;
+  }
+
+  .month-check {
+    display: none;
+  }
+
+  .month-check-label {
+    display: block;
+    text-align: center;
+    padding: 0.4rem;
+    border: 1px solid var(--soft);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .month-check:checked + .month-check-label {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 0.8rem 2rem;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+    margin-top: 1rem;
+  }
+
+  .btn-primary:hover {
+    background: var(--accent);
+  }
+
+  /* 設定 */
+  .settings-section {
+    background: white;
+    border: 1px solid var(--soft);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .prep-slider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .prep-slider input[type="range"] {
+    flex: 1;
+    padding: 0;
+    border: none;
+    background: none;
+    accent-color: var(--accent);
+  }
+
+  .prep-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.2rem;
+    color: var(--accent);
+    min-width: 3rem;
+    text-align: center;
+  }
+
+  /* タブコンテンツ */
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 空状態 */
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--muted);
+    border: 1px dashed var(--soft);
+  }
+
+  .empty-state p {
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+
+  /* 編集モーダル */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 20, 16, 0.5);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.open {
+    display: flex;
+  }
+
+  .modal {
+    background: var(--paper);
+    border: 1px solid var(--warm);
+    padding: 2rem;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    justify-content: flex-end;
+  }
+
+  .btn-cancel {
+    background: none;
+    border: 1px solid var(--soft);
+    padding: 0.6rem 1.5rem;
+    font-family: 'Shippori Mincho', serif;
+    cursor: pointer;
+    color: var(--muted);
+  }
+
+  /* 今月のハイライト */
+  .this-month-banner {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .this-month-banner .month-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 2.5rem;
+    font-weight: 300;
+    color: var(--warm);
+    line-height: 1;
+  }
+
+  .this-month-banner .month-info {
+    flex: 1;
+  }
+
+  .this-month-banner .month-info h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+  }
+
+  .this-month-banner .month-info p {
+    font-size: 0.8rem;
+    color: rgba(245, 240, 232, 0.6);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .active-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    background: var(--accent);
+    color: white;
+    padding: 0.3rem 0.8rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">つくる<span>暦</span></div>
+  <div class="today-label" id="todayLabel"></div>
+  <nav>
+    <button class="nav-btn active" onclick="showTab('home')">今月</button>
+    <button class="nav-btn" onclick="showTab('products')">商品</button>
+    <button class="nav-btn" onclick="showTab('add')">追加</button>
+    <button class="nav-btn" onclick="showTab('settings')">設定</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- 今月タブ -->
+  <div class="tab-content active" id="tab-home">
+    <div class="this-month-banner">
+      <div class="month-num" id="bannerMonth"></div>
+      <div class="month-info">
+        <h2 id="bannerTitle">今月の制作スケジュール</h2>
+        <p id="bannerSub"></p>
+      </div>
+      <div class="active-count" id="activeCount"></div>
+    </div>
+
+    <div class="metronome-section">
+      <div class="section-title">週別やることリスト</div>
+      <div class="weeks-grid" id="weeksGrid"></div>
+    </div>
+
+    <div class="section-title">今月・準備中の商品</div>
+    <div class="products-grid" id="homeProductsGrid"></div>
+  </div>
+
+  <!-- 商品一覧タブ -->
+  <div class="tab-content" id="tab-products">
+    <div class="section-title">登録商品一覧</div>
+    <div class="products-grid" id="allProductsGrid"></div>
+  </div>
+
+  <!-- 追加タブ -->
+  <div class="tab-content" id="tab-add">
+    <div class="form-section">
+      <div class="form-title">商品を追加する</div>
+      <div class="form-row">
+        <div class="form-group full">
+          <label>商品名</label>
+          <input type="text" id="addName" placeholder="例：ハロウィンスタンプセット">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group full">
+          <label>カテゴリ</label>
+          <input type="text" id="addCategory" placeholder="例：アファメーション、グリーティングなど">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label>販売する月（複数選択可）</label>
+        <div class="month-checkboxes">
+          <input type="checkbox" class="month-check" id="m1" value="1"><label class="month-check-label" for="m1">1月</label>
+          <input type="checkbox" class="month-check" id="m2" value="2"><label class="month-check-label" for="m2">2月</label>
+          <input type="checkbox" class="month-check" id="m3" value="3"><label class="month-check-label" for="m3">3月</label>
+          <input type="checkbox" class="month-check" id="m4" value="4"><label class="month-check-label" for="m4">4月</label>
+          <input type="checkbox" class="month-check" id="m5" value="5"><label class="month-check-label" for="m5">5月</label>
+          <input type="checkbox" class="month-check" id="m6" value="6"><label class="month-check-label" for="m6">6月</label>
+          <input type="checkbox" class="month-check" id="m7" value="7"><label class="month-check-label" for="m7">7月</label>
+          <input type="checkbox" class="month-check" id="m8" value="8"><label class="month-check-label" for="m8">8月</label>
+          <input type="checkbox" class="month-check" id="m9" value="9"><label class="month-check-label" for="m9">9月</label>
+          <input type="checkbox" class="month-check" id="m10" value="10"><label class="month-check-label" for="m10">10月</label>
+          <input type="checkbox" class="month-check" id="m11" value="11"><label class="month-check-label" for="m11">11月</label>
+          <input type="checkbox" class="month-check" id="m12" value="12"><label class="month-check-label" for="m12">12月</label>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>週別タスク（1週目）</label>
+          <input type="text" id="task1" placeholder="例：デザイン・構想">
+        </div>
+        <div class="form-group">
+          <label>週別タスク（2週目）</label>
+          <input type="text" id="task2" placeholder="例：素材準備・試作">
+        </div>
+        <div class="form-group">
+          <label>週別タスク（3週目）</label>
+          <input type="text" id="task3" placeholder="例：制作・撮影">
+        </div>
+        <div class="form-group">
+          <label>週別タスク（4週目）</label>
+          <input type="text" id="task4" placeholder="例：出品登録">
+        </div>
+        <div class="form-group">
+          <label>週別タスク（5週目）</label>
+          <input type="text" id="task5" placeholder="例：SNS投稿・告知">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="addProduct()">追加する</button>
+    </div>
+  </div>
+
+  <!-- 設定タブ -->
+  <div class="tab-content" id="tab-settings">
+    <div class="settings-section">
+      <div class="form-title">準備開始月の設定</div>
+      <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">販売月の何ヶ月前から「今月のリスト」に表示するか設定します。</p>
+      <div class="prep-slider">
+        <span style="font-size:0.8rem; color:var(--muted); font-family:'DM Mono',monospace;">1ヶ月前</span>
+        <input type="range" min="1" max="4" value="2" id="prepMonths" oninput="updatePrepDisplay(this.value)">
+        <span style="font-size:0.8rem; color:var(--muted); font-family:'DM Mono',monospace;">4ヶ月前</span>
+        <div class="prep-value" id="prepDisplay">2ヶ月前</div>
+      </div>
+      <button class="btn-primary" onclick="savePrepSetting()">保存</button>
+    </div>
+
+    <div class="settings-section">
+      <div class="form-title">データ管理</div>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn-sm" onclick="exportData()">データをエクスポート</button>
+        <button class="btn-sm" onclick="document.getElementById('importFile').click()">データをインポート</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+        <button class="btn-sm danger" onclick="clearAllData()">全データを削除</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- 編集モーダル -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-title">商品を編集する</div>
+    <input type="hidden" id="editId">
+    <div class="form-group" style="margin-bottom:1rem">
+      <label>商品名</label>
+      <input type="text" id="editName">
+    </div>
+    <div class="form-group" style="margin-bottom:1rem">
+      <label>カテゴリ</label>
+      <input type="text" id="editCategory">
+    </div>
+    <div class="form-group" style="margin-bottom:1rem">
+      <label>販売する月</label>
+      <div class="month-checkboxes" id="editMonthBoxes">
+        <input type="checkbox" class="month-check" id="em1" value="1"><label class="month-check-label" for="em1">1月</label>
+        <input type="checkbox" class="month-check" id="em2" value="2"><label class="month-check-label" for="em2">2月</label>
+        <input type="checkbox" class="month-check" id="em3" value="3"><label class="month-check-label" for="em3">3月</label>
+        <input type="checkbox" class="month-check" id="em4" value="4"><label class="month-check-label" for="em4">4月</label>
+        <input type="checkbox" class="month-check" id="em5" value="5"><label class="month-check-label" for="em5">5月</label>
+        <input type="checkbox" class="month-check" id="em6" value="6"><label class="month-check-label" for="em6">6月</label>
+        <input type="checkbox" class="month-check" id="em7" value="7"><label class="month-check-label" for="em7">7月</label>
+        <input type="checkbox" class="month-check" id="em8" value="8"><label class="month-check-label" for="em8">8月</label>
+        <input type="checkbox" class="month-check" id="em9" value="9"><label class="month-check-label" for="em9">9月</label>
+        <input type="checkbox" class="month-check" id="em10" value="10"><label class="month-check-label" for="em10">10月</label>
+        <input type="checkbox" class="month-check" id="em11" value="11"><label class="month-check-label" for="em11">11月</label>
+        <input type="checkbox" class="month-check" id="em12" value="12"><label class="month-check-label" for="em12">12月</label>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:1rem;">
+      <div class="form-group"><label>1週目タスク</label><input type="text" id="editTask1"></div>
+      <div class="form-group"><label>2週目タスク</label><input type="text" id="editTask2"></div>
+      <div class="form-group"><label>3週目タスク</label><input type="text" id="editTask3"></div>
+      <div class="form-group"><label>4週目タスク</label><input type="text" id="editTask4"></div>
+      <div class="form-group"><label>5週目タスク</label><input type="text" id="editTask5"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-primary" onclick="saveEdit()" style="margin-top:0">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // データ管理
+  // ============================================================
+  const STORAGE_KEY = 'tsukuru_koyomi_v1';
+  const PREP_KEY = 'tsukuru_koyomi_prep';
+
+  function loadData() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch { return []; }
+  }
+
+  function saveData(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  function loadPrep() {
+    return parseInt(localStorage.getItem(PREP_KEY)) || 2;
+  }
+
+  function savePrep(val) {
+    localStorage.setItem(PREP_KEY, val);
+  }
+
+  // ============================================================
+  // 日付・週計算
+  // ============================================================
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentDay = now.getDate();
+
+  function getCurrentWeek() {
+    // 1〜7日=1週目, 8〜14日=2週目, 15〜21日=3週目, 22〜28日=4週目, 29以降=5週目
+    return Math.min(Math.ceil(currentDay / 7), 5);
+  }
+
+  function getMonthName(m) {
+    const names = ['','1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    return names[m];
+  }
+
+  // ============================================================
+  // タブ切り替え
+  // ============================================================
+  function showTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    event.target.classList.add('active');
+    if (tab === 'home') renderHome();
+    if (tab === 'products') renderAllProducts();
+  }
+
+  // ============================================================
+  // ホーム画面
+  // ============================================================
+  function renderHome() {
+    const products = loadData();
+    const prep = loadPrep();
+    const currentWeek = getCurrentWeek();
+
+    // バナー
+    document.getElementById('bannerMonth').textContent = currentMonth + '月';
+    document.getElementById('bannerSub').textContent = 
+      `${now.getFullYear()}年 / 第${currentWeek}週 / 準備開始：${prep}ヶ月前設定`;
+
+    // 今月＋準備中の商品を絞り込む
+    const activeProducts = products.filter(p => {
+      for (let i = 0; i < prep; i++) {
+        const checkMonth = ((currentMonth - 1 + i) % 12) + 1;
+        if (p.months && p.months.includes(checkMonth)) return true;
+      }
+      return false;
+    });
+
+    document.getElementById('activeCount').textContent = activeProducts.length + '件';
+
+    // タイトル
+    const saleThisMonth = products.filter(p => p.months && p.months.includes(currentMonth));
+    document.getElementById('bannerTitle').textContent = 
+      saleThisMonth.length > 0 
+        ? `今月販売：${saleThisMonth.map(p=>p.name).join('、')}` 
+        : '今月販売予定の商品がありません';
+
+    // 週グリッド
+    renderWeeks(activeProducts, currentWeek);
+
+    // 商品グリッド
+    const grid = document.getElementById('homeProductsGrid');
+    if (activeProducts.length === 0) {
+      grid.innerHTML = '<div class="empty-state"><div>📦</div><p>今月・準備中の商品がありません<br>商品を追加してください</p></div>';
+      return;
+    }
+    grid.innerHTML = activeProducts.map(p => productCardHTML(p, true)).join('');
+  }
+
+  function renderWeeks(activeProducts, currentWeek) {
+    const grid = document.getElementById('weeksGrid');
+    const weekLabels = ['1週目', '2週目', '3週目', '4週目', '5週目'];
+    const weekDates = ['1〜7日', '8〜14日', '15〜21日', '22〜28日', '29日〜'];
+
+    let html = '';
+    for (let w = 1; w <= 5; w++) {
+      const isCurrent = w === currentWeek;
+      
+      // この週のタスクを全商品から集める
+      const tasks = [];
+      activeProducts.forEach(p => {
+        const task = p.tasks && p.tasks[w - 1];
+        if (task) tasks.push({ name: p.name, task });
+      });
+
+      html += `<div class="week-card ${isCurrent ? 'current' : ''}">
+        <div class="week-label">${weekLabels[w-1]}（${weekDates[w-1]}）</div>
+        <ul class="week-tasks">`;
+
+      if (tasks.length === 0) {
+        html += `<li class="empty-task">タスクなし</li>`;
+      } else {
+        tasks.forEach(t => {
+          html += `<li class="week-task ${isCurrent ? 'highlight' : ''}">
+            <span style="font-size:0.7rem; color:var(--muted);">${t.name}</span><br>
+            ${t.task}
+          </li>`;
+        });
+      }
+
+      html += `</ul></div>`;
+    }
+    grid.innerHTML = html;
+  }
+
+  // ============================================================
+  // 商品カードHTML
+  // ============================================================
+  function productCardHTML(p, showActions = false) {
+    const monthTags = (p.months || []).map(m => {
+      const isActive = m === currentMonth;
+      return `<span class="month-tag ${isActive ? 'active-month' : ''}">${m}月</span>`;
+    }).join('');
+
+    return `<div class="product-card">
+      <div class="product-name">${p.name}</div>
+      ${p.category ? `<div style="font-size:0.75rem; color:var(--muted); margin-bottom:0.5rem; font-family:'DM Mono',monospace;">${p.category}</div>` : ''}
+      <div class="product-meta">${monthTags || '<span class="month-tag">月未設定</span>'}</div>
+      <div class="product-actions">
+        <button class="btn-sm" onclick="openEdit('${p.id}')">編集</button>
+        <button class="btn-sm danger" onclick="deleteProduct('${p.id}')">削除</button>
+      </div>
+    </div>`;
+  }
+
+  // ============================================================
+  // 全商品一覧
+  // ============================================================
+  function renderAllProducts() {
+    const products = loadData();
+    const grid = document.getElementById('allProductsGrid');
+    if (products.length === 0) {
+      grid.innerHTML = '<div class="empty-state"><div>📦</div><p>商品がまだ登録されていません</p></div>';
+      return;
+    }
+    grid.innerHTML = products.map(p => productCardHTML(p)).join('');
+  }
+
+  // ============================================================
+  // 商品追加
+  // ============================================================
+  function addProduct() {
+    const name = document.getElementById('addName').value.trim();
+    if (!name) { alert('商品名を入力してください。'); return; }
+
+    const months = [];
+    document.querySelectorAll('.month-check:checked').forEach(cb => {
+      months.push(parseInt(cb.value));
+    });
+
+    const tasks = [
+      document.getElementById('task1').value.trim(),
+      document.getElementById('task2').value.trim(),
+      document.getElementById('task3').value.trim(),
+      document.getElementById('task4').value.trim(),
+      document.getElementById('task5').value.trim(),
+    ];
+
+    const product = {
+      id: Date.now().toString(),
+      name,
+      category: document.getElementById('addCategory').value.trim(),
+      months: months.sort((a,b) => a-b),
+      tasks,
+      createdAt: new Date().toISOString()
+    };
+
+    const products = loadData();
+    products.push(product);
+    saveData(products);
+
+    // フォームリセット
+    document.getElementById('addName').value = '';
+    document.getElementById('addCategory').value = '';
+    document.querySelectorAll('.month-check').forEach(cb => cb.checked = false);
+    ['task1','task2','task3','task4','task5'].forEach(id => document.getElementById(id).value = '');
+
+    alert(`「${name}」を追加しました！`);
+    showTab('home');
+    document.querySelectorAll('.nav-btn')[0].classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+      if (i !== 0) btn.classList.remove('active');
+    });
+  }
+
+  // ============================================================
+  // 商品削除
+  // ============================================================
+  function deleteProduct(id) {
+    if (!confirm('この商品を削除しますか？')) return;
+    const products = loadData().filter(p => p.id !== id);
+    saveData(products);
+    renderHome();
+    renderAllProducts();
+  }
+
+  // ============================================================
+  // 商品編集
+  // ============================================================
+  function openEdit(id) {
+    const product = loadData().find(p => p.id === id);
+    if (!product) return;
+
+    document.getElementById('editId').value = id;
+    document.getElementById('editName').value = product.name;
+    document.getElementById('editCategory').value = product.category || '';
+
+    // 月チェックボックス
+    for (let m = 1; m <= 12; m++) {
+      document.getElementById('em' + m).checked = 
+        product.months && product.months.includes(m);
+    }
+
+    // タスク
+    for (let t = 1; t <= 5; t++) {
+      document.getElementById('editTask' + t).value = 
+        (product.tasks && product.tasks[t-1]) || '';
+    }
+
+    document.getElementById('editModal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('editModal').classList.remove('open');
+  }
+
+  function saveEdit() {
+    const id = document.getElementById('editId').value;
+    const products = loadData();
+    const idx = products.findIndex(p => p.id === id);
+    if (idx === -1) return;
+
+    const months = [];
+    for (let m = 1; m <= 12; m++) {
+      if (document.getElementById('em' + m).checked) months.push(m);
+    }
+
+    const tasks = [];
+    for (let t = 1; t <= 5; t++) {
+      tasks.push(document.getElementById('editTask' + t).value.trim());
+    }
+
+    products[idx] = {
+      ...products[idx],
+      name: document.getElementById('editName').value.trim(),
+      category: document.getElementById('editCategory').value.trim(),
+      months: months.sort((a,b) => a-b),
+      tasks
+    };
+
+    saveData(products);
+    closeModal();
+    renderHome();
+    renderAllProducts();
+  }
+
+  // ============================================================
+  // 設定
+  // ============================================================
+  function updatePrepDisplay(val) {
+    document.getElementById('prepDisplay').textContent = val + 'ヶ月前';
+  }
+
+  function savePrepSetting() {
+    const val = document.getElementById('prepMonths').value;
+    savePrep(val);
+    alert(val + 'ヶ月前から表示するように設定しました！');
+    renderHome();
+  }
+
+  // ============================================================
+  // データエクスポート・インポート
+  // ============================================================
+  function exportData() {
+    const data = {
+      products: loadData(),
+      prep: loadPrep(),
+      exportedAt: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tsukuru_koyomi_' + new Date().toLocaleDateString('ja-JP').replace(/\//g, '') + '.json';
+    a.click();
+  }
+
+  function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (data.products) {
+          saveData(data.products);
+          if (data.prep) savePrep(data.prep);
+          alert('インポートしました！');
+          renderHome();
+        }
+      } catch { alert('ファイルの読み込みに失敗しました。'); }
+    };
+    reader.readAsText(file);
+  }
+
+  function clearAllData() {
+    if (!confirm('全データを削除しますか？この操作は取り消せません。')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(PREP_KEY);
+    alert('データを削除しました。');
+    renderHome();
+  }
+
+  // ============================================================
+  // 初期化
+  // ============================================================
+  function init() {
+    // 今日の日付表示
+    const dateStr = now.toLocaleDateString('ja-JP', {year:'numeric', month:'long', day:'numeric', weekday:'short'});
+    document.getElementById('todayLabel').textContent = dateStr;
+
+    // 準備月スライダー初期値
+    const prep = loadPrep();
+    document.getElementById('prepMonths').value = prep;
+    document.getElementById('prepDisplay').textContent = prep + 'ヶ月前';
+
+    // サンプルデータ（初回のみ）
+    if (loadData().length === 0) {
+      const sampleData = [
+        {
+          id: '1',
+          name: 'ハロウィンスタンプ',
+          category: 'イラストレーション',
+          months: [10],
+          tasks: ['デザイン・構想', '素材準備', '制作・撮影', '出品登録', 'SNS投稿'],
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: '2',
+          name: 'アファメーションセット',
+          category: 'アファメーション',
+          months: [1, 4, 7, 10],
+          tasks: ['文字選定', '試作・調整', '制作・撮影', '出品登録', 'SNS・委託'],
+          createdAt: new Date().toISOString()
+        }
+      ];
+      saveData(sampleData);
+    }
+
+    renderHome();
+  }
+
+  init();
+</script>
+</body>
+</html>
